@@ -1,0 +1,67 @@
+-- Universal Aimbot Script
+getgenv().CiazwareUniversalAimbotLoaded = false
+getgenv().AimPart = "Head" -- Set the aim part
+getgenv().AimRadius = 100 -- Set the aim radius
+getgenv().AimlockToggleKey = "Q" -- Key to toggle aimlock
+getgenv().PredictMovement = true -- Enable or disable prediction
+getgenv().PredictionVelocity = 0.5 -- Prediction speed
+
+local Players, Uis, RService, Client = game:GetService("Players"), game:GetService("UserInputService"), game:GetService("RunService"), Players.LocalPlayer
+local Mouse, Camera = Client:GetMouse(), workspace.CurrentCamera
+local Aimlock, MousePressed = true, false
+local AimlockTarget
+
+if getgenv().CiazwareUniversalAimbotLoaded then
+    return -- Prevent loading if already loaded
+end
+
+getgenv().GetNearestTarget = function()
+    local closestPlayer = nil
+    local closestDistance = getgenv().AimRadius
+
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= Client and player.Character and player.Character:FindFirstChild(getgenv().AimPart) then
+            local distance = (player.Character[getgenv().AimPart].Position - Camera.CFrame.p).magnitude
+            if distance < closestDistance then
+                closestDistance = distance
+                closestPlayer = player
+            end
+        end
+    end
+    return closestPlayer
+end
+
+Uis.InputBegan:Connect(function(Key)
+    if not (Uis:GetFocusedTextBox()) then 
+        if Key.UserInputType == Enum.UserInputType.MouseButton2 then 
+            MousePressed = true
+            AimlockTarget = GetNearestTarget()
+        end
+        if Key.KeyCode == Enum.KeyCode[AimlockToggleKey] then 
+            Aimlock = not Aimlock
+        end
+    end
+end)
+
+Uis.InputEnded:Connect(function(Key)
+    if not (Uis:GetFocusedTextBox()) then 
+        if Key.UserInputType == Enum.UserInputType.MouseButton2 then 
+            AimlockTarget = nil
+            MousePressed = false 
+        end
+    end
+end)
+
+RService.RenderStepped:Connect(function()
+    if Aimlock and MousePressed and AimlockTarget then 
+        if AimlockTarget.Character and AimlockTarget.Character:FindFirstChild(getgenv().AimPart) then 
+            if getgenv().PredictMovement then 
+                Camera.CFrame = CFrame.new(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position + AimlockTarget.Character[getgenv().AimPart].Velocity / getgenv().PredictionVelocity)
+            else 
+                Camera.CFrame = CFrame.new(Camera.CFrame.p, AimlockTarget.Character[getgenv().AimPart].Position)
+            end
+        end
+    end
+end)
+
+getgenv().CiazwareUniversalAimbotLoaded = true
